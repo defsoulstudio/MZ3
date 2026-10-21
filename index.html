@@ -73,37 +73,15 @@
       selectedTipoAud: 'Todos',
       filtroAcordos: 'vigentes',
       selectedProcessoId: null,
-      isAccessModalOpen: false,
       isLocked: true,
-      requireEmailGate: true,
-      loginEmailInput: 'diretoria@mz3engenharia.com.br',
-      loginMode: 'login',
-      requestNameInput: '',
-      requestEmailInput: '',
+      passwordInput: '',
+      showPassword: false,
       loginError: '',
-      newAllowedName: '',
-      newAllowedEmail: '',
-      toastMessage: null,
-      accessUsers: [
-        { nome: 'Diretoria MZ3 Engenharia', email: 'diretoria@mz3engenharia.com.br', perfil: 'Administrador', status: 'Aprovado' },
-        { nome: 'GT Advogados (Assessoria)', email: 'juridico@mz3engenharia.com.br', perfil: 'Jurídico', status: 'Aprovado' },
-        { nome: 'Apresentação Reunião', email: 'reuniao@mz3engenharia.com.br', perfil: 'Visualizador', status: 'Aprovado' },
-        { nome: 'Convidado Externo', email: 'convidado@parceiro.com.br', perfil: 'Visualizador', status: 'Pendente' }
-      ]
+      toastMessage: null
     };
+    const SENHA_PADRAO = 'MZ3@2026';
 
-    try {
-      const savedUsers = localStorage.getItem('mz3_access_users_v1');
-      if (savedUsers) {
-        state.accessUsers = JSON.parse(savedUsers);
-      }
-    } catch (e) {}
 
-    function saveAccessUsers() {
-      try {
-        localStorage.setItem('mz3_access_users_v1', JSON.stringify(state.accessUsers));
-      } catch (e) {}
-    }
 
     let activeCharts = [];
     function destroyCharts() {
@@ -999,75 +977,9 @@
     function renderConfiguracoesHtml() {
       const isDark = state.theme === 'dark';
       const cardBg = isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-[#0B3B44] shadow-sm';
-      const inputCls = isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-800';
 
       return `
         <div class="space-y-6 max-w-6xl mx-auto">
-          <!-- Card de Aprovação e Revogação de Acessos via E-mail -->
-          <div class="${cardBg} rounded-2xl border p-6 shadow-sm">
-            <div class="flex flex-wrap items-center justify-between gap-3 mb-3 pb-3 border-b border-dashed border-slate-300/60">
-              <div>
-                <h3 class="text-lg font-bold">Controle de Aprovação e Revogação de Acessos via E-mail</h3>
-                <p class="text-xs font-bold uppercase tracking-wider text-[#00897B]">
-                  🔒 GERENCIAMENTO DE PERMISSÕES POR E-MAIL (LGPD)
-                </p>
-              </div>
-              <button data-action="lock-screen" class="px-3.5 py-2 rounded-lg bg-[#004D40] hover:bg-[#00695C] text-white text-xs font-bold transition-colors">
-                🔒 Bloquear Painel (Exigir E-mail Aprovado)
-              </button>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-4">
-              <input id="cfg-new-name" type="text" value="${escapeHtml(state.newAllowedName)}" placeholder="Nome do colaborador / convidado..." class="rounded-lg px-3 py-2 border text-xs ${inputCls}" />
-              <input id="cfg-new-email" type="email" value="${escapeHtml(state.newAllowedEmail)}" placeholder="E-mail (ex: socio@mz3engenharia.com.br)" class="rounded-lg px-3 py-2 border text-xs ${inputCls}" />
-              <button data-action="add-approved-email" class="px-4 py-2 rounded-lg bg-[#00897B] hover:bg-[#00695C] text-white text-xs font-bold transition-colors">
-                + Adicionar e Aprovar E-mail
-              </button>
-            </div>
-
-            <div class="overflow-x-auto rounded-xl border border-slate-200/60">
-              <table class="w-full text-xs text-left">
-                <thead class="${tableHeaderClass()}">
-                  <tr>
-                    <th class="px-4 py-2.5">Nome / Identificação</th>
-                    <th class="px-4 py-2.5">E-mail</th>
-                    <th class="px-4 py-2.5">Perfil</th>
-                    <th class="px-4 py-2.5">Status do Acesso</th>
-                    <th class="px-4 py-2.5 text-right">Aprovar / Revogar</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${state.accessUsers.map((u, idx) => `
-                    <tr class="${tableRowClass(idx)}">
-                      <td class="px-4 py-2.5 font-semibold">${escapeHtml(u.nome)}</td>
-                      <td class="px-4 py-2.5 font-mono text-[#00897B]">${escapeHtml(u.email)}</td>
-                      <td class="px-4 py-2.5">${escapeHtml(u.perfil)}</td>
-                      <td class="px-4 py-2.5">
-                        <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold ${u.status === 'Aprovado' ? 'bg-emerald-500/20 text-emerald-700' : 'bg-amber-500/20 text-amber-700'}">
-                          ${escapeHtml(u.status)}
-                        </span>
-                      </td>
-                      <td class="px-4 py-2.5 text-right space-x-1.5">
-                        ${u.status !== 'Aprovado' ? `
-                          <button data-action="approve-user" data-idx="${idx}" class="px-3 py-1 rounded-lg bg-[#00897B] hover:bg-[#00695C] text-white font-bold">
-                            Aprovar Acesso
-                          </button>
-                        ` : `
-                          <button data-action="revoke-user" data-idx="${idx}" class="px-3 py-1 rounded-lg bg-red-500/15 hover:bg-red-500/25 text-red-600 font-bold">
-                            Revogar Acesso
-                          </button>
-                        `}
-                        <button data-action="remove-user" data-idx="${idx}" class="px-2 py-1 rounded-lg bg-slate-200/70 hover:bg-slate-300 text-slate-700 font-semibold">
-                          Excluir
-                        </button>
-                      </td>
-                    </tr>
-                  `).join('')}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="${cardBg} rounded-2xl border p-6 shadow-sm">
               <h3 class="text-lg font-bold mb-1">Contatos da GT Advogados</h3>
@@ -1113,88 +1025,9 @@
               </p>
               <ul class="space-y-2 text-sm list-disc list-inside">
                 <li><strong>Classificação:</strong> Dados Jurídicos Confidenciais</li>
-                <li><strong>Controle de Acesso:</strong> Diretoria & Jurídico</li>
+                <li><strong>Controle de Acesso:</strong> Protegido por Senha Padrão (Modo Somente Leitura)</li>
                 <li><strong>Versão da Aplicação:</strong> v2.0 (Agosto/2026)</li>
               </ul>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    function renderAccessModalHtml() {
-      if (!state.isAccessModalOpen) return '';
-      const isDark = state.theme === 'dark';
-      const modalBg = isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-[#0B3B44]';
-      const inputCls = isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-800';
-
-      return `
-        <div data-action="backdrop-close-access" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div class="w-full max-w-2xl max-h-[88vh] rounded-2xl border shadow-2xl overflow-hidden flex flex-col ${modalBg}">
-            <div class="bg-[#004D40] text-white px-6 py-4 flex items-center justify-between">
-              <div>
-                <h3 class="text-base font-extrabold">Aprovar ou Revogar Acessos via E-mail</h3>
-                <p class="text-[11px] text-teal-100">Gerencie os e-mails autorizados a visualizar o Dashboard Jurídico MZ3</p>
-              </div>
-              <button data-action="close-access-modal" class="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-bold">✕</button>
-            </div>
-            <div class="p-6 overflow-y-auto space-y-4 text-xs custom-scroll">
-              <div class="flex flex-wrap items-center justify-between gap-2 p-3.5 rounded-xl bg-[#00897B]/10 border border-[#00897B]/30">
-                <div>
-                  <div class="font-bold text-[#00695C]">Tela de Verificação de E-mail no Início</div>
-                  <div class="text-[11px] opacity-80">Exige que o visitante informe um e-mail com status "Aprovado" para visualizar os dados.</div>
-                </div>
-                <div class="flex flex-wrap items-center gap-2">
-                  <button data-action="download-index-html" class="px-3.5 py-1.5 rounded-lg bg-[#00897B] hover:bg-[#00695C] text-white font-bold">
-                    ⬇️ Baixar index.html (GitHub / Vercel)
-                  </button>
-                  <button data-action="lock-screen" class="px-3.5 py-1.5 rounded-lg bg-[#004D40] hover:bg-[#00695C] text-white font-bold">
-                    🔒 Bloquear e Exigir E-mail Agora
-                  </button>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <input id="modal-new-name" type="text" value="${escapeHtml(state.newAllowedName)}" placeholder="Nome da pessoa..." class="rounded-lg px-3 py-2 border text-xs ${inputCls}" />
-                <input id="modal-new-email" type="email" value="${escapeHtml(state.newAllowedEmail)}" placeholder="E-mail para aprovar..." class="rounded-lg px-3 py-2 border text-xs ${inputCls}" />
-                <button data-action="add-approved-email-modal" class="px-4 py-2 rounded-lg bg-[#00897B] hover:bg-[#00695C] text-white font-bold">
-                  + Aprovar E-mail
-                </button>
-              </div>
-
-              <div class="overflow-x-auto rounded-xl border border-slate-200/60">
-                <table class="w-full text-xs text-left">
-                  <thead class="${tableHeaderClass()}">
-                    <tr>
-                      <th class="px-3.5 py-2.5">Nome</th>
-                      <th class="px-3.5 py-2.5">E-mail</th>
-                      <th class="px-3.5 py-2.5">Status</th>
-                      <th class="px-3.5 py-2.5 text-right">Ação</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${state.accessUsers.map((u, idx) => `
-                      <tr class="${tableRowClass(idx)}">
-                        <td class="px-3.5 py-2 font-semibold">${escapeHtml(u.nome)}</td>
-                        <td class="px-3.5 py-2 font-mono text-[#00897B]">${escapeHtml(u.email)}</td>
-                        <td class="px-3.5 py-2">
-                          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${u.status === 'Aprovado' ? 'bg-emerald-500/20 text-emerald-700' : 'bg-amber-500/20 text-amber-700'}">
-                            ${escapeHtml(u.status)}
-                          </span>
-                        </td>
-                        <td class="px-3.5 py-2 text-right space-x-1">
-                          ${u.status !== 'Aprovado' ? `
-                            <button data-action="approve-user" data-idx="${idx}" class="px-2.5 py-1 rounded bg-[#00897B] text-white font-bold">Aprovar</button>
-                          ` : `
-                            <button data-action="revoke-user" data-idx="${idx}" class="px-2.5 py-1 rounded bg-red-500/15 text-red-600 font-bold">Revogar</button>
-                          `}
-                          <button data-action="remove-user" data-idx="${idx}" class="px-2 py-1 rounded bg-slate-200 text-slate-700">Excluir</button>
-                        </td>
-                      </tr>
-                    `).join('')}
-                  </tbody>
-                </table>
-              </div>
             </div>
           </div>
         </div>
@@ -1401,35 +1234,24 @@
               <div class="bg-[#004D40] text-white p-6 text-center">
                 <img src="${MZ3_LOGO_SRC}" alt="MZ3 Engenharia" class="w-14 h-14 object-contain mx-auto rounded-xl bg-white/10 p-2 mb-3" />
                 <h2 class="text-lg font-extrabold tracking-wide">MZ3 ENGENHARIA | Portal Jurídico</h2>
-                <p class="text-xs text-teal-200 mt-1">Acesso Restrito a E-mails Aprovados (LGPD)</p>
+                <p class="text-xs text-teal-200 mt-1">Acesso Protegido por Senha • Somente Visualização (LGPD)</p>
               </div>
-              <div class="flex border-b border-slate-200 text-xs font-bold">
-                <button data-action="login-mode" data-mode="login" class="flex-1 py-3 text-center ${state.loginMode === 'login' ? 'text-[#00897B] border-b-2 border-[#00897B] bg-teal-50/40' : 'text-slate-500'}">Entrar com E-mail Aprovado</button>
-                <button data-action="login-mode" data-mode="request" class="flex-1 py-3 text-center ${state.loginMode === 'request' ? 'text-[#00897B] border-b-2 border-[#00897B] bg-teal-50/40' : 'text-slate-500'}">Solicitar Aprovação</button>
+              <div class="p-6 space-y-4 text-xs">
+                <div>
+                  <label class="block font-bold mb-1.5 text-slate-700">Senha de Acesso ao Painel</label>
+                  <div class="relative">
+                    <input id="gate-password-input" type="${state.showPassword ? 'text' : 'password'}" value="${escapeHtml(state.passwordInput)}" placeholder="Digite a senha padrão..." class="w-full rounded-lg pl-3 pr-10 py-2.5 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#00897B]" />
+                    <button type="button" data-action="toggle-show-password" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 text-xs font-semibold" title="Mostrar/Ocultar senha">
+                      ${state.showPassword ? '🙈' : '👁️'}
+                    </button>
+                  </div>
+                </div>
+                ${state.loginError ? `<div class="p-2.5 rounded-lg bg-red-50 border border-red-200 text-red-600 font-semibold">${escapeHtml(state.loginError)}</div>` : ''}
+                <button data-action="unlock-gate" class="w-full py-2.5 rounded-xl bg-[#00897B] hover:bg-[#00695C] text-white font-extrabold text-sm shadow-md transition-colors">
+                  🔒 Desbloquear Visualização
+                </button>
+                <p class="text-[11px] text-center text-slate-400">Ambiente em modo somente leitura. Nenhuma informação pode ser alterada por visitantes.</p>
               </div>
-              ${state.loginMode === 'login' ? `
-                <div class="p-6 space-y-4 text-xs">
-                  <div>
-                    <label class="block font-bold mb-1 text-slate-700">Seu E-mail Corporativo</label>
-                    <input id="gate-email-input" type="email" value="${escapeHtml(state.loginEmailInput)}" placeholder="diretoria@mz3engenharia.com.br" class="w-full rounded-lg px-3 py-2.5 border border-slate-300" />
-                  </div>
-                  ${state.loginError ? `<div class="p-2.5 rounded-lg bg-red-50 border border-red-200 text-red-600 font-semibold">${escapeHtml(state.loginError)}</div>` : ''}
-                  <button data-action="unlock-gate" class="w-full py-2.5 rounded-xl bg-[#00897B] hover:bg-[#00695C] text-white font-extrabold text-sm shadow-md">Acessar Painel Jurídico</button>
-                </div>
-              ` : `
-                <div class="p-6 space-y-4 text-xs">
-                  <p class="text-slate-600">Informe seu nome e e-mail para entrar na fila de aprovação do administrador:</p>
-                  <div>
-                    <label class="block font-bold mb-1 text-slate-700">Nome Completo</label>
-                    <input id="req-name-input" type="text" value="${escapeHtml(state.requestNameInput)}" placeholder="Seu nome..." class="w-full rounded-lg px-3 py-2 border border-slate-300" />
-                  </div>
-                  <div>
-                    <label class="block font-bold mb-1 text-slate-700">E-mail</label>
-                    <input id="req-email-input" type="email" value="${escapeHtml(state.requestEmailInput)}" placeholder="seu.email@empresa.com.br" class="w-full rounded-lg px-3 py-2 border border-slate-300" />
-                  </div>
-                  <button data-action="submit-access-request" class="w-full py-2.5 rounded-xl bg-[#004D40] hover:bg-[#00695C] text-white font-extrabold text-sm shadow-md">Enviar Solicitação por E-mail</button>
-                </div>
-              `}
             </div>
           </div>
         `;
@@ -1440,7 +1262,6 @@
       const filteredProcs = getFilteredProcessos();
       const currentMenu = MENU_ITEMS.find((m) => m.name === state.activeTab) || MENU_ITEMS[0];
       const currentTabIndex = MENU_ITEMS.findIndex((m) => m.name === state.activeTab);
-      const pendingCount = state.accessUsers.filter((u) => u.status === 'Pendente').length;
 
       let tabContentHtml = '';
       if (state.activeTab === 'Visão Geral') tabContentHtml = renderVisaoGeralHtml(filteredProcs);
@@ -1504,10 +1325,8 @@
                   ${state.searchQuery ? `<button data-action="clear-search" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs">✕</button>` : ''}
                 </div>
 
-                <!-- Botão de Aprovar ou Revogar Acessos via E-mail -->
-                <button data-action="open-access-modal" class="px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 border transition-colors ${isDark ? 'bg-slate-800 border-teal-500/40 text-teal-300 hover:bg-slate-700' : 'bg-teal-50 border-[#00897B]/40 text-[#004D40] hover:bg-teal-100'}">
-                  <span>✉️ Acessos E-mail</span>
-                  ${pendingCount > 0 ? `<span class="px-1.5 py-0.2 rounded-full bg-amber-500 text-white text-[10px] font-extrabold">${pendingCount}</span>` : ''}
+                <button data-action="lock-screen" class="px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 border transition-colors ${isDark ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-[#F8FAFC] border-slate-300 text-slate-700 hover:bg-slate-100'}" title="Bloquear painel com senha">
+                  <span>🔒 Bloquear</span>
                 </button>
 
                 <button data-action="toggle-presentation" class="px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${state.isPresentationMode ? 'bg-[#00897B] text-white border-[#00897B]' : (isDark ? 'bg-slate-800 border-slate-700 text-teal-400' : 'bg-[#F4F7F6] border-slate-300 text-[#0B3B44]')}">
@@ -1541,7 +1360,6 @@
             </main>
           </div>
 
-          ${renderAccessModalHtml()}
           ${renderProcessoModalHtml()}
 
           ${state.toastMessage ? `
@@ -1604,132 +1422,28 @@
           state.selectedProcessoId = null;
           renderApp();
         }
-      } else if (action === 'open-access-modal') {
-        state.isAccessModalOpen = true;
-        renderApp();
-      } else if (action === 'close-access-modal') {
-        state.isAccessModalOpen = false;
-        renderApp();
-      } else if (action === 'backdrop-close-access') {
-        if (e.target === target) {
-          state.isAccessModalOpen = false;
-          renderApp();
-        }
       } else if (action === 'lock-screen') {
-        state.isAccessModalOpen = false;
+        state.passwordInput = '';
         state.loginError = '';
         state.isLocked = true;
         renderApp();
-      } else if (action === 'login-mode') {
-        state.loginMode = target.getAttribute('data-mode') || 'login';
-        state.loginError = '';
+      } else if (action === 'toggle-show-password') {
+        const pwEl = document.getElementById('gate-password-input');
+        if (pwEl) state.passwordInput = pwEl.value;
+        state.showPassword = !state.showPassword;
         renderApp();
       } else if (action === 'unlock-gate') {
-        const emailEl = document.getElementById('gate-email-input');
-        const em = (emailEl ? emailEl.value : state.loginEmailInput).trim().toLowerCase();
-        state.loginEmailInput = em;
-        const userEntry = state.accessUsers.find((u) => u.email.toLowerCase() === em);
-        if (!userEntry) {
-          state.loginError = 'Este e-mail não está autorizado. Solicite aprovação na aba ao lado.';
+        const pwEl = document.getElementById('gate-password-input');
+        const typed = (pwEl ? pwEl.value : state.passwordInput).trim();
+        state.passwordInput = typed;
+        if (typed === SENHA_PADRAO || typed.toLowerCase() === SENHA_PADRAO.toLowerCase()) {
+          state.isLocked = false;
+          state.passwordInput = '';
+          state.loginError = '';
+          showToast('Acesso liberado (Modo Somente Visualização)');
+        } else {
+          state.loginError = 'Senha incorreta. Solicite a senha padrão ao administrador da MZ3.';
           renderApp();
-          return;
-        }
-        if (userEntry.status !== 'Aprovado') {
-          state.loginError = 'Seu acesso está Pendente de aprovação pelo administrador.';
-          renderApp();
-          return;
-        }
-        state.isLocked = false;
-        state.loginError = '';
-        showToast('Acesso liberado para ' + em);
-      } else if (action === 'submit-access-request') {
-        const nmEl = document.getElementById('req-name-input');
-        const emEl = document.getElementById('req-email-input');
-        const nm = (nmEl ? nmEl.value : '').trim();
-        const em = (emEl ? emEl.value : '').trim().toLowerCase();
-        if (!nm || !em.includes('@')) {
-          state.loginError = 'Informe seu nome e um e-mail válido.';
-          renderApp();
-          return;
-        }
-        state.accessUsers.push({ nome: nm, email: em, perfil: 'Visualizador', status: 'Pendente' });
-        saveAccessUsers();
-        state.requestNameInput = '';
-        state.requestEmailInput = '';
-        state.loginMode = 'login';
-        state.loginEmailInput = em;
-        state.loginError = 'Solicitação registrada! O administrador já pode aprovar seu e-mail.';
-        renderApp();
-      } else if (action === 'approve-user') {
-        const idx = Number(target.getAttribute('data-idx'));
-        if (state.accessUsers[idx]) {
-          state.accessUsers[idx].status = 'Aprovado';
-          saveAccessUsers();
-          showToast('Acesso aprovado para ' + state.accessUsers[idx].email);
-        }
-      } else if (action === 'revoke-user') {
-        const idx = Number(target.getAttribute('data-idx'));
-        if (state.accessUsers[idx]) {
-          state.accessUsers[idx].status = 'Pendente';
-          saveAccessUsers();
-          showToast('Acesso revogado para ' + state.accessUsers[idx].email);
-        }
-      } else if (action === 'remove-user') {
-        const idx = Number(target.getAttribute('data-idx'));
-        if (state.accessUsers[idx]) {
-          const removed = state.accessUsers.splice(idx, 1);
-          saveAccessUsers();
-          showToast('Removido: ' + (removed[0] ? removed[0].email : ''));
-        }
-      } else if (action === 'add-approved-email' || action === 'add-approved-email-modal') {
-        const isModal = action === 'add-approved-email-modal';
-        const nmEl = document.getElementById(isModal ? 'modal-new-name' : 'cfg-new-name');
-        const emEl = document.getElementById(isModal ? 'modal-new-email' : 'cfg-new-email');
-        let nm = (nmEl ? nmEl.value : state.newAllowedName).trim();
-        let em = (emEl ? emEl.value : state.newAllowedEmail).trim().toLowerCase();
-        if (!em && nm.includes('@')) {
-          em = nm.toLowerCase();
-          nm = em.split('@')[0];
-        }
-        if (!em) {
-          if (nm) {
-            const slug = nm.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '.').replace(/^\.|\.$/g, '');
-            em = slug + '@mz3engenharia.com.br';
-          } else {
-            showToast('Preencha o e-mail (ou nome) antes de clicar em + Aprovar E-mail.');
-            if (emEl) emEl.focus();
-            return;
-          }
-        } else if (!em.includes('@')) {
-          em = em + '@mz3engenharia.com.br';
-        }
-        state.accessUsers.unshift({
-          nome: nm || em.split('@')[0],
-          email: em,
-          perfil: 'Visualizador',
-          status: 'Aprovado'
-        });
-        state.newAllowedName = '';
-        state.newAllowedEmail = '';
-        saveAccessUsers();
-        showToast('Acesso adicionado e aprovado: ' + em);
-      } else if (action === 'download-index-html') {
-        try {
-          let rawHtml = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
-          const usersJson = JSON.stringify(state.accessUsers);
-          rawHtml = rawHtml.replace(/isLocked:\s*(true|false),/, 'isLocked: true,').replace(/accessUsers:\s*\[[\s\S]*?\]\s*\};/, 'accessUsers: ' + usersJson + '\n    };');
-          const blob = new Blob([rawHtml], { type: 'text/html;charset=utf-8;' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'index.html';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-          showToast('Arquivo index.html baixado com os e-mails aprovados gravados no código!');
-        } catch (err) {
-          showToast('Erro ao gerar index.html');
         }
       } else if (action === 'export-csv') {
         const rows = getFilteredProcessos();
@@ -1750,26 +1464,26 @@
       }
     });
 
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && e.target && e.target.id === 'gate-password-input') {
+        const typed = e.target.value.trim();
+        if (typed === SENHA_PADRAO || typed.toLowerCase() === SENHA_PADRAO.toLowerCase()) {
+          state.isLocked = false;
+          state.passwordInput = '';
+          state.loginError = '';
+          showToast('Acesso liberado (Modo Somente Visualização)');
+        } else {
+          state.passwordInput = typed;
+          state.loginError = 'Senha incorreta. Solicite a senha padrão ao administrador da MZ3.';
+          renderApp();
+        }
+      }
+    });
+
     document.addEventListener('input', (e) => {
       if (!e.target) return;
-      if (e.target.id === 'modal-new-name' || e.target.id === 'cfg-new-name') {
-        state.newAllowedName = e.target.value;
-        return;
-      }
-      if (e.target.id === 'modal-new-email' || e.target.id === 'cfg-new-email') {
-        state.newAllowedEmail = e.target.value;
-        return;
-      }
-      if (e.target.id === 'gate-email-input') {
-        state.loginEmailInput = e.target.value;
-        return;
-      }
-      if (e.target.id === 'req-name-input') {
-        state.requestNameInput = e.target.value;
-        return;
-      }
-      if (e.target.id === 'req-email-input') {
-        state.requestEmailInput = e.target.value;
+      if (e.target.id === 'gate-password-input') {
+        state.passwordInput = e.target.value;
         return;
       }
       if (e.target.id === 'global-search-input') {
